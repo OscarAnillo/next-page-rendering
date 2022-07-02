@@ -2,6 +2,9 @@ import path from "path";
 import { promises } from "fs";
 
 export default function ProductDetailPage({ productFound }) {
+  if (!productFound) {
+    return <p>Loading...</p>;
+  }
   return (
     <div>
       <h1>{productFound.title}</h1>
@@ -27,6 +30,10 @@ export async function getStaticProps(context) {
   const productFound = data.products.find(
     (product) => product.id === productId
   );
+
+  if (!productFound) {
+    return { notFound: true };
+  }
 
   return {
     props: {
