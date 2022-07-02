@@ -2,7 +2,9 @@ import path from "path";
 import { promises } from "fs";
 
 export default function ProductDetailPage({ productFound }) {
-  console.log(productFound);
+  if (!productFound) {
+    return <p>Loading...</p>;
+  }
   return (
     <div>
       <h1>{productFound.title}</h1>
@@ -11,17 +13,27 @@ export default function ProductDetailPage({ productFound }) {
   );
 }
 
-export async function getStaticProps(context) {
-  const { params } = context;
-  const productId = params.pid;
-
+async function getData() {
   const filePath = path.join(process.cwd(), "data", "dummy-backend.json");
   const jsonData = await promises.readFile(filePath);
   const data = JSON.parse(jsonData);
 
+  return data;
+}
+
+export async function getStaticProps(context) {
+  const { params } = context;
+  const productId = params.pid;
+
+  const data = await getData();
+
   const productFound = data.products.find(
     (product) => product.id === productId
   );
+
+  if (!productFound) {
+    return { notFound: true };
+  }
 
   return {
     props: {
@@ -31,8 +43,13 @@ export async function getStaticProps(context) {
 }
 
 export async function getStaticPaths() {
+  const data = await getData();
+
+  const ids = data.products.map((product) => product.id);
+  const pathWithParams = ids.map((id) => ({ params: { pid: id } }));
+
   return {
-    paths: [{ params: { pid: `p1` } }],
+    paths: pathWithParams,
     fallback: true,
   };
 }
